@@ -13,7 +13,6 @@ provider "aws" {
   region = var.aws_region
 }
 
-# S3 bucket for knowledge base
 resource "aws_s3_bucket" "knowledge_bucket" {
   bucket = "${var.project_name}-knowledge-bucket"
 }

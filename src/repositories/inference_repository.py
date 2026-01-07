@@ -13,7 +13,7 @@ from utils.constants import ALFRED_SYSTEM_PROMPT, CALENDLY_URL
 from utils.errors import RateLimitError
 
 
-class ChatbotRepository:
+class InferenceRepository:
     def __init__(self, bedrock_service=None, dynamodb_service=None, s3_service=None):
         self.table_name = os.getenv("ALFRED_USAGE_TRACKER_TABLE")
         self.bedrock_service = bedrock_service or BedrockService()
