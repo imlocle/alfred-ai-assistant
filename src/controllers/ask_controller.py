@@ -1,13 +1,13 @@
 import json
 from datetime import datetime
-from services.chatbot_service import ChatbotService
+from services.inference_service import InferenceService
 from utils.constants import ALLOWED_ORIGINS
 from utils.errors import CORSOriginError, InvalidQuestionError
 
 
 class AskController:
-    def __init__(self, chatbot_service: ChatbotService = None):
-        self.chatbot_service = chatbot_service or ChatbotService()
+    def __init__(self, chatbot_service: InferenceService = None):
+        self.chatbot_service = chatbot_service or InferenceService()
 
     def handle_event(self, event) -> str:
         headers = event.get("headers", {})

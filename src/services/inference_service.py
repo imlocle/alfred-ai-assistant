@@ -1,12 +1,12 @@
-from repositories.chatbot_repository import ChatbotRepository
+from repositories.inference_repository import InferenceRepository
 
 
-class ChatbotService:
+class InferenceService:
     def __init__(
         self,
-        chatbot_repository: ChatbotRepository = None,
+        chatbot_repository: InferenceRepository = None,
     ):
-        self.chatbot_repository = chatbot_repository or ChatbotRepository()
+        self.chatbot_repository = chatbot_repository or InferenceRepository()
 
     def ask(self, user_id: str, question: str, current_date: str) -> str:
         self.chatbot_repository.check_usage(user_id=user_id, current_date=current_date)
