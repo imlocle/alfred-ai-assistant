@@ -6,8 +6,8 @@ from utils.errors import CORSOriginError, InvalidQuestionError
 
 
 class AskController:
-    def __init__(self, chatbot_service: InferenceService = None):
-        self.chatbot_service = chatbot_service or InferenceService()
+    def __init__(self, inference_service: InferenceService = None):
+        self.inference_service = inference_service or InferenceService()
 
     def handle_event(self, event) -> str:
         headers = event.get("headers", {})
@@ -30,7 +30,7 @@ class AskController:
         if not question:
             raise InvalidQuestionError(question=question)
 
-        answer = self.chatbot_service.ask(user_id, question, current_date)
+        answer = self.inference_service.ask(user_id, question, current_date)
         print(f"A: {answer}")
 
         return answer

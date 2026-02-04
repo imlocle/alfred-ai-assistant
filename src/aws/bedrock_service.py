@@ -3,27 +3,28 @@ import boto3
 import json
 import os
 from botocore.config import Config
+from mypy_boto3_bedrock_runtime.client import BedrockRuntimeClient
 
 # Cache Bedrock client
-_bedrock_client = None
+_bedrock_runtime_client: BedrockRuntimeClient | None = None
 
 
-def get_bedrock_client():
-    global _bedrock_client
-    if _bedrock_client is None:
-        _bedrock_client = boto3.client(
+def get_bedrock_runtime_client() -> BedrockRuntimeClient:
+    global _bedrock_runtime_client
+    if _bedrock_runtime_client is None:
+        _bedrock_runtime_client = boto3.client(
             "bedrock-runtime",
             region_name=os.environ.get("AWS_REGION"),
             config=Config(
                 connect_timeout=3600, read_timeout=3600, retries={"max_attempts": 3}
             ),
         )
-    return _bedrock_client
+    return _bedrock_runtime_client
 
 
 class BedrockService:
     def __init__(self):
-        self.client = get_bedrock_client()
+        self.client = get_bedrock_runtime_client()
         self.model_id = os.environ.get("MODEL_ID")
 
     def invoke_model(

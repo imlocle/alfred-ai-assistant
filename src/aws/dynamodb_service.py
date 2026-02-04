@@ -1,3 +1,4 @@
+from mypy_boto3_dynamodb.service_resource import DynamoDBServiceResource
 from mypy_boto3_dynamodb.type_defs import (
     ScanInputTableScanTypeDef,
     GetItemInputTableGetItemTypeDef,
@@ -12,9 +13,13 @@ import boto3
 from botocore.exceptions import ClientError
 
 
+def get_dynamodb_resource() -> DynamoDBServiceResource:
+    return boto3.resource("dynamodb")
+
+
 class DynamodbService:
     def __init__(self, table_name):
-        self.ddb_resource = boto3.resource("dynamodb")
+        self.ddb_resource = get_dynamodb_resource()
         self.Table = self.ddb_resource.Table(table_name)
 
     @staticmethod
