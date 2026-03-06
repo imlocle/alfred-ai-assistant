@@ -2,6 +2,9 @@ import boto3
 import json
 import os
 from botocore.config import Config
+from shared.logging import get_logger
+
+logger = get_logger(__name__)
 
 # Cache S3 Client
 _s3_client = None
@@ -22,7 +25,7 @@ def get_s3_client():
     return _s3_client
 
 
-class S3Service:
+class KnowledgeProvider:
     def __init__(self):
         self.client = get_s3_client()
         self.bucket_name = os.environ.get("KNOWLEDGE_BUCKET")
@@ -33,5 +36,8 @@ class S3Service:
             content = response["Body"].read().decode("utf-8")
             return json.loads(content)
         except Exception as e:
-            print(f"[S3Service] Failed to fetch knowledge base from s3://{self.bucket_name}/{file_key}: {e}")
+            logger.error(
+                "Failed to fetch knowledge base",
+                extra={"bucket": self.bucket_name, "key": file_key, "error": str(e)}
+            )
             raise Exception(f"Failed to load knowledge base from s3://{self.bucket_name}/{file_key}") from e

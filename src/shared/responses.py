@@ -1,6 +1,6 @@
 import json
 
-from utils.constants import DOMAIN_URL
+from shared.config import DOMAIN_URL
 
 
 def get_headers(cors_origin: str = DOMAIN_URL) -> dict[str, str]:

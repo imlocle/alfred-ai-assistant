@@ -4,6 +4,9 @@ import json
 import os
 from botocore.config import Config
 from mypy_boto3_bedrock_runtime.client import BedrockRuntimeClient
+from shared.logging import get_logger
+
+logger = get_logger(__name__)
 
 # Cache Bedrock client
 _bedrock_runtime_client: BedrockRuntimeClient | None = None
@@ -25,7 +28,7 @@ def get_bedrock_runtime_client() -> BedrockRuntimeClient:
     return _bedrock_runtime_client
 
 
-class BedrockService:
+class LLMProvider:
     def __init__(self):
         self.client = get_bedrock_runtime_client()
         model_id = os.environ.get("MODEL_ID")
@@ -56,7 +59,6 @@ class BedrockService:
                 body=json.dumps(payload),
             )
             result = json.loads(response["body"].read())
-            # print(f"Usage: {result.get('usage')}")
             resp_messages = result.get("output", {}).get("message", {})
             if resp_messages:
                 content = resp_messages.get("content", [])
@@ -66,7 +68,7 @@ class BedrockService:
                         return answer
             return "Sorry, I don't have an answer."
         except Exception as e:
-            print(f"[BedrockService] Error: {e}")
+            logger.error("LLM invocation failed", extra={"error": str(e)}, exc_info=True)
             return "Sorry, Alfred is unavailable right now."
 
     def invoke_model_with_response_stream(
@@ -106,5 +108,5 @@ class BedrockService:
             
             return accumulated_text if accumulated_text else "Sorry, I don't have an answer."
         except Exception as e:
-            print(f"[BedrockService] Streaming Error: {e}")
+            logger.error("LLM streaming invocation failed", extra={"error": str(e)}, exc_info=True)
             return "Sorry, Alfred is unavailable right now."

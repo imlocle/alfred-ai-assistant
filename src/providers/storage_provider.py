@@ -5,7 +5,6 @@ from mypy_boto3_dynamodb.type_defs import (
     PutItemInputTablePutItemTypeDef,
     UpdateItemInputTableUpdateItemTypeDef,
     QueryInputTableQueryTypeDef,
-    TableAttributeValueTypeDef,
     DeleteItemInputTableDeleteItemTypeDef,
 )
 from typing import Any, Dict, List, Optional, cast
@@ -17,7 +16,7 @@ def get_dynamodb_resource() -> DynamoDBServiceResource:
     return cast(DynamoDBServiceResource, boto3.resource("dynamodb"))
 
 
-class DynamodbService:
+class StorageProvider:
     def __init__(self, table_name):
         self.ddb_resource = get_dynamodb_resource()
         self.Table = self.ddb_resource.Table(table_name)

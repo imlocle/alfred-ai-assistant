@@ -3,6 +3,8 @@ LOCAL_HOST = "http://localhost:5173"
 ALLOWED_ORIGINS = [LOCAL_HOST, DOMAIN_URL]
 CALENDLY_URL = "https://calendly.com/loc-le/30-min-meeting"
 MAX_QUESTION_LENGTH = 2000
+CACHE_TTL_SECONDS = 3600  # 1 hour cache TTL
+RATE_LIMIT_MAX_REQUESTS = 50  # Max requests per day per user
 
 ALFRED_SYSTEM_PROMPT = """
 You are Alfred, a formal and courteous AI butler inspired by Alfred Pennyworth, Bruce Wayne's trusted aide.
