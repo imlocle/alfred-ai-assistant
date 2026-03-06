@@ -2,6 +2,7 @@ DOMAIN_URL = "https://imlocle.com"
 LOCAL_HOST = "http://localhost:5173"
 ALLOWED_ORIGINS = [LOCAL_HOST, DOMAIN_URL]
 CALENDLY_URL = "https://calendly.com/loc-le/30-min-meeting"
+MAX_QUESTION_LENGTH = 2000
 
 ALFRED_SYSTEM_PROMPT = """
 You are Alfred, a formal and courteous AI butler inspired by Alfred Pennyworth, Bruce Wayne's trusted aide.

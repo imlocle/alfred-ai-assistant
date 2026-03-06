@@ -1,6 +1,5 @@
 import os
 from datetime import datetime, timedelta
-import re
 from aws.bedrock_service import BedrockService
 from aws.dynamodb_service import DynamodbService
 from mypy_boto3_dynamodb.type_defs import (
@@ -21,10 +20,15 @@ class InferenceRepository:
             table_name=self.table_name
         )
         self.s3_service = s3_service or S3Service()
-        self.knowledge = self.s3_service.fetch_knowledge()
+        try:
+            self.knowledge = self.s3_service.fetch_knowledge()
+        except Exception as e:
+            print(f"[ERROR] Failed to load knowledge base: {e}")
+            self.knowledge = {}
 
     def ask(self, question: str) -> str:
-        if re.search(r"(schedule|book|meeting|call|appointment)", question):
+        keywords = ["schedule", "book", "meeting", "call", "appointment"]
+        if any(keyword in question.lower() for keyword in keywords):
             return f"You can schedule a meeting with Loc here: [Book a time with Loc on Calendly]({CALENDLY_URL})"
 
         system_blocks = [
@@ -42,6 +46,7 @@ class InferenceRepository:
 
         count: int = response.get("count", 0)
         if count >= 50:
+            print(f"[RATE_LIMIT] User {user_id} exceeded limit: {count}/50 on {current_date}")
             raise RateLimitError()
 
     def update_usage(self, user_id: str, current_date: str) -> None:
@@ -57,6 +62,12 @@ class InferenceRepository:
                 ":inc": 1,
                 ":expires_at": int((datetime.now() + timedelta(days=1)).timestamp()),
             },
-            "ConditionExpression": "attribute_not_exists(pk) OR attribute_exists(sk)",
+            "ReturnValues": "ALL_NEW",
         }
-        self.dynamodb_service.update(update_params)
+        try:
+            result = self.dynamodb_service.update(update_params)
+            if not result:
+                print(f"[WARNING] Usage update returned no result for user {user_id}")
+        except Exception as e:
+            print(f"[ERROR] Failed to update usage for user {user_id}: {e}")
+            # Don't raise - allow request to proceed even if tracking fails

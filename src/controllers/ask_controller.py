@@ -1,12 +1,13 @@
 import json
 from datetime import datetime
+from typing import Optional
 from services.inference_service import InferenceService
-from utils.constants import ALLOWED_ORIGINS
+from utils.constants import ALLOWED_ORIGINS, MAX_QUESTION_LENGTH
 from utils.errors import CORSOriginError, InvalidQuestionError
 
 
 class AskController:
-    def __init__(self, inference_service: InferenceService = None):
+    def __init__(self, inference_service: Optional[InferenceService] = None):
         self.inference_service = inference_service or InferenceService()
 
     def handle_event(self, event) -> str:
@@ -27,7 +28,7 @@ class AskController:
 
         question: str = body.get("question", "")
         print(f"Q: {question}")
-        if not question:
+        if not question or len(question) > MAX_QUESTION_LENGTH:
             raise InvalidQuestionError(question=question)
 
         answer = self.inference_service.ask(user_id, question, current_date)
