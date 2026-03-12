@@ -1,4 +1,8 @@
-.PHONY: deploy clean zip-all zip-layer zip-alfredask clean generate-backend-config
+.PHONY: deploy clean zip-all zip-layer $(LAMBDAS:%=zip-%) generate-backend-config
+
+#####################################
+# Config
+#####################################
 
 ENV ?= dev
 PROJECT_NAME = alfred
@@ -7,7 +11,7 @@ REGION = us-west-1
 BUILD_DIR = terraform/builds
 LAYER_ZIP = $(BUILD_DIR)/python.zip
 
-LAMBDAS = ask-alfred
+LAMBDAS = assistant
 
 BACKEND_CONFIG_TMP = terraform/backend.auto.hcl
 PYTHON_LAYER_IMAGE = public.ecr.aws/sam/build-python3.13

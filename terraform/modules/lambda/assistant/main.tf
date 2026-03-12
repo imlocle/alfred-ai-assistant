@@ -3,7 +3,7 @@ data "aws_caller_identity" "current" {}
 locals {
   name          = "${var.project_name}-${var.lambda_name}"
   function_name = "${local.name}-${var.environment}"
-  handler_path  = replace(var.lambda_name, "-", "_")
+  handler_path  = "assistant_handler"
 }
 
 # Lambda Role
@@ -24,7 +24,7 @@ resource "aws_iam_role" "lambda_role" {
 
 # Lambda Policy
 resource "aws_iam_role_policy" "lambda_policy" {
-  name = "${local.name}lambda-policy-${var.environment}"
+  name = "${local.name}-lambda-policy-${var.environment}"
   role = aws_iam_role.lambda_role.id
   policy = jsonencode({
     Version = "2012-10-17",
@@ -33,7 +33,6 @@ resource "aws_iam_role_policy" "lambda_policy" {
         Effect = "Allow",
         Action = [
           "s3:GetObject",
-          "s3:PutObject",
           "s3:ListBucket"
         ],
         Resource = [
@@ -47,7 +46,10 @@ resource "aws_iam_role_policy" "lambda_policy" {
           "bedrock:InvokeModel",
           "bedrock:InvokeModelWithResponseStream",
         ],
-        Resource = "*"
+        Resource = [
+          "arn:aws:bedrock:*::foundation-model/*",
+          "arn:aws:bedrock:*:*:inference-profile/*"
+        ]
       },
       {
         Effect = "Allow",
@@ -65,7 +67,10 @@ resource "aws_iam_role_policy" "lambda_policy" {
           "dynamodb:UpdateItem",
           "dynamodb:PutItem"
         ],
-        Resource = ["${var.alfred_usage_tracker_table_arn}", "${var.alfred_usage_tracker_table_arn}/*"]
+        Resource = [
+          var.usage_tracker_table_arn,
+          "${var.usage_tracker_table_arn}/*"
+        ]
       }
     ]
   })
@@ -99,10 +104,24 @@ resource "aws_lambda_function" "this" {
 
   environment {
     variables = {
-      ALFRED_USAGE_TRACKER_TABLE = var.alfred_usage_tracker_table_name
-      KNOWLEDGE_BUCKET           = var.knowledge_bucket
-      MODEL_ID                   = "arn:aws:bedrock:${var.aws_region}:${data.aws_caller_identity.current.account_id}:inference-profile/us.amazon.nova-lite-v1:0"
+      USAGE_TRACKER_TABLE = var.usage_tracker_table_name
+      KNOWLEDGE_BUCKET    = var.knowledge_bucket
+      MODEL_ID            = "us.amazon.nova-lite-v1:0"
     }
+  }
+}
+
+#####################################
+# CloudWatch Log Group with Retention
+#####################################
+
+resource "aws_cloudwatch_log_group" "lambda_logs" {
+  name              = "/aws/lambda/${local.function_name}"
+  retention_in_days = 30
+
+  tags = {
+    Environment = var.environment
+    Application = var.project_name
   }
 }
 
@@ -119,7 +138,6 @@ resource "aws_lambda_layer_version" "common_dependencies" {
     create_before_destroy = true
   }
 
-  # 👇 Force new version on changes
   source_code_hash = filebase64sha256("${path.root}/builds/python.zip")
 }
 
@@ -160,5 +178,75 @@ resource "null_resource" "force_lambda_update" {
 
   provisioner "local-exec" {
     command = "touch ${path.root}/builds/${local.function_name}.zip"
+  }
+}
+
+#####################################
+# CloudWatch Alarms
+#####################################
+
+resource "aws_cloudwatch_metric_alarm" "lambda_errors" {
+  alarm_name          = "${local.function_name}-errors"
+  comparison_operator = "GreaterThanThreshold"
+  evaluation_periods  = "2"
+  metric_name         = "Errors"
+  namespace           = "AWS/Lambda"
+  period              = "300"
+  statistic           = "Sum"
+  threshold           = "10"
+  alarm_description   = "Alert when Lambda errors exceed threshold"
+  treat_missing_data  = "notBreaching"
+
+  dimensions = {
+    FunctionName = aws_lambda_function.this.function_name
+  }
+
+  tags = {
+    Environment = var.environment
+    Application = var.project_name
+  }
+}
+
+resource "aws_cloudwatch_metric_alarm" "lambda_duration" {
+  alarm_name          = "${local.function_name}-duration"
+  comparison_operator = "GreaterThanThreshold"
+  evaluation_periods  = "2"
+  metric_name         = "Duration"
+  namespace           = "AWS/Lambda"
+  period              = "300"
+  statistic           = "Average"
+  threshold           = "10000"
+  alarm_description   = "Alert when Lambda duration is high"
+  treat_missing_data  = "notBreaching"
+
+  dimensions = {
+    FunctionName = aws_lambda_function.this.function_name
+  }
+
+  tags = {
+    Environment = var.environment
+    Application = var.project_name
+  }
+}
+
+resource "aws_cloudwatch_metric_alarm" "lambda_throttles" {
+  alarm_name          = "${local.function_name}-throttles"
+  comparison_operator = "GreaterThanThreshold"
+  evaluation_periods  = "1"
+  metric_name         = "Throttles"
+  namespace           = "AWS/Lambda"
+  period              = "300"
+  statistic           = "Sum"
+  threshold           = "5"
+  alarm_description   = "Alert when Lambda is being throttled"
+  treat_missing_data  = "notBreaching"
+
+  dimensions = {
+    FunctionName = aws_lambda_function.this.function_name
+  }
+
+  tags = {
+    Environment = var.environment
+    Application = var.project_name
   }
 }

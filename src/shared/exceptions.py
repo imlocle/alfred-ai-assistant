@@ -1,4 +1,4 @@
-from utils.response_service import get_headers
+from shared.responses import get_headers
 
 
 class InvalidQuestionError(Exception):
