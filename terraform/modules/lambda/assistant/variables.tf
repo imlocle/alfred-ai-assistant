@@ -26,11 +26,11 @@ variable "aws_region" {
   type = string
 }
 
-variable "alfred_usage_tracker_table_name" {
+variable "usage_tracker_table_name" {
   type = string
 }
 
-variable "alfred_usage_tracker_table_arn" {
+variable "usage_tracker_table_arn" {
   type = string
 }
 
