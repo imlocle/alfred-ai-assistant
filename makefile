@@ -9,17 +9,19 @@ PROJECT_NAME = alfred
 REGION = us-west-1
 
 BUILD_DIR = terraform/builds
+LAYER_DIR = lambda_layer/python
 LAYER_ZIP = $(BUILD_DIR)/python.zip
 
 LAMBDAS = assistant
 
 BACKEND_CONFIG_TMP = terraform/backend.auto.hcl
 PYTHON_LAYER_IMAGE = public.ecr.aws/sam/build-python3.13
+REQ_FILE = requirements.txt
 
 # Clean all build artifacts
 clean:
 	rm -f $(BUILD_DIR)/*.zip $(BACKEND_CONFIG_TMP)
-	rm -rf lambda_layer/python
+	rm -rf $(LAYER_DIR)
 
 # Ensure build directory exists
 $(BUILD_DIR):
@@ -27,14 +29,14 @@ $(BUILD_DIR):
 
 # Zip Lambda layer using Docker (Amazon Linux 2)
 zip-layer: $(BUILD_DIR)
-	rm -rf lambda_layer/python
-	mkdir -p lambda_layer/python
+	rm -rf $(LAYER_DIR)
+	mkdir -p $(LAYER_DIR)
 	docker run --rm \
 		--platform linux/amd64 \
-		-v $(CURDIR)/src:/var/task \
-		-v $(CURDIR)/lambda_layer/python:/lambda/python \
+		-v $(CURDIR):/var/task \
+		-v $(CURDIR)/$(LAYER_DIR):/lambda/python \
 		$(PYTHON_LAYER_IMAGE) \
-		/bin/sh -c "pip3 install -r /var/task/requirements.txt -t /lambda/python --no-cache-dir"
+		/bin/sh -c "pip3 install -r /var/task/$(REQ_FILE) -t /lambda/python --no-cache-dir"
 	cd lambda_layer && zip -r ../$(LAYER_ZIP) python > /dev/null
 
 # Zip full src directory for each Lambda
