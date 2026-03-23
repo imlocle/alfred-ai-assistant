@@ -104,6 +104,7 @@ resource "aws_lambda_function" "this" {
 
   environment {
     variables = {
+      ENVIRONMENT         = var.environment
       USAGE_TRACKER_TABLE = var.usage_tracker_table_name
       KNOWLEDGE_BUCKET    = var.knowledge_bucket
       MODEL_ID            = "us.amazon.nova-lite-v1:0"

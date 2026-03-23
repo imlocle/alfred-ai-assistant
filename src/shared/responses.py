@@ -2,6 +2,13 @@ import json
 
 from shared.config import DOMAIN_URL
 
+CORS_HEADERS = {
+    "Content-Type": "application/json",
+    "Access-Control-Allow-Origin": "*",
+    "Access-Control-Allow-Methods": "GET,POST,PUT,DELETE,OPTIONS",
+    "Access-Control-Allow-Headers": "Content-Type,X-Amz-Date,Authorization,X-Api-Key",
+}
+
 
 def get_headers(cors_origin: str = DOMAIN_URL) -> dict[str, str]:
     return {
